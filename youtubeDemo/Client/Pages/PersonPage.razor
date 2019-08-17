@@ -1,0 +1,182 @@
+﻿@page "/PersonPage"
+@using youtubeDemo.Client.Shared
+@using youtubeDemo.Shared.Model
+@inject HttpClient Http
+@using System.Linq
+
+<h1>Demo for Youtube Person Project</h1>
+
+
+<table width="100%" style="background:#05163D;color:honeydew">
+    <tr>
+        <td width="20"> </td>
+        <td>
+            <h2> Add New Person </h2>
+        </td>
+        <td> </td>
+        <td align="right">
+            <button class="btn btn-info" @onclick="(async () => await AddNewPerson())">Clear</button>
+        </td>
+        <td width="10"> </td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+</table>
+<div class="container">
+    <div class="row">
+
+        <div class="col-6">
+
+            <form>
+                <div class="form-group">
+                    <label for="email">Person  Id</label>
+
+                    <input type="text" class="form-control" @bind="PersonG.ID" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="Person">Name:</label>
+
+                    <input type="text" class="form-control" @bind="PersonG.Name" placeholder="Person Name" />
+                </div>
+
+                <div class="form-group">
+                    <label for="pwd">	Age:</label>
+                    <input type="text" class="form-control" @bind="PersonG.Age" placeholder="Age" />
+                </div>
+
+
+                <div class="form-group form-check">
+                    <label class="form-check-label">
+                        <input type="checkbox" @bind="PersonG.Visible" class="form-check-input" />Make It Visible ?
+
+                    </label>
+                </div>
+
+                <div class="form-group" hidden>
+                    <label for="IsVisible">IsVisible</label>
+
+                    <input type="text" class="form-control" bind="@PersonG.Visible.ToString()" value="@PersonG.Visible.ToString()" readonly />
+                </div>
+
+
+                <button type="button" class="btn btn-success" @onclick="(async () => await AddPerson())" style="width:220px;">Save</button>
+
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<br />
+
+<table width="100%" style="background:#0A2464;color:honeydew">
+    <tr>
+        <td width="20"> </td>
+        <td>
+            <h2>Blood Details</h2>
+        </td>
+
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+    </tr>
+</table>
+
+@if (Person == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Person ID</th>
+                <th>Person Name</th>
+                <th>Person Age</th>
+                <th>Added Time</th>
+                <th>Visible</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var _Person in Person)
+            {
+            <tr>
+                <td>@_Person.ID</td>
+                <td>@_Person.Name</td>
+                <td>@_Person.Age</td>
+                <td>@_Person.Urd</td>
+
+                <td>@_Person.Visible</td>
+
+
+                <td><button class="btn btn-primary" @onclick="@(async () => await EditPerson(@_Person.ID))" style="width:110px;">Edit</button></td>
+                <td><button class="btn btn-danger" @onclick="@(async () => await DeletePerson(@_Person.ID))">Delete</button></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@functions {
+
+  
+    Persons[] Person;
+
+    Persons PersonG = new Persons();
+
+    string ids = "0";
+    bool showAddrow = false;
+    protected override async Task OnInitializedAsync()
+    {
+        Person = await Http.GetJsonAsync<Persons[]>("/api/Persons/");
+    }
+
+    async Task AddNewPerson()
+    {
+        PersonG = new Persons();
+
+    }
+    // Add New Blood Details Method
+    async Task AddPerson()
+
+    {
+        PersonG.Urd = (System.DateTime.Now).ToShortDateString().ToString();
+
+
+        if (PersonG.ID == 0)
+
+        {
+            await Http.SendJsonAsync(HttpMethod.Post, "/api/Persons/", PersonG);
+
+        }
+        else
+        {
+            await Http.SendJsonAsync(HttpMethod.Put, "/api/Persons/" + PersonG.ID, PersonG);
+        }
+        PersonG = new Persons();
+        Person = await Http.GetJsonAsync<Persons[]>("/api/Persons/");
+    }
+    // Edit Method
+    protected async Task EditPerson(int Id)
+    {
+        ids = Id.ToString();
+
+        PersonG = await Http.GetJsonAsync<Persons>("/api/Persons/" + Convert.ToInt32(Id));
+    }
+    // Delte Method
+    protected async Task DeletePerson(int Id)
+    {
+        ids = Id.ToString();
+        await Http.DeleteAsync("/api/Persons/" + Convert.ToInt32(Id));
+
+
+        Person = await Http.GetJsonAsync<Persons[]>("/api/Persons/");
+    }
+
+} 
